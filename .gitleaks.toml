@@ -1,0 +1,9 @@
+title = "devsecops-lab gitleaks config"
+
+[extend]
+useDefault = true
+
+# 這裡故意不對 app/config.py 裡的 AWS example key 設 allowlist：
+# STEP1 教學需要 `gitleaks detect --source .` 真的抓到這把 key（見 README/課程投影片
+# 「SECRET SCAN」單元），allowlist 存在的話 detect 和 protect 兩種模式都掃不到它
+# （已實測確認，跟原先以為的「detect 不吃 allowlist」不同），demo 就沒有意義了。

@@ -1,0 +1,70 @@
+# ═══════════════════════════════════════════════════════
+# 起司模型 · 第 2 層：CI 層（GitHub Actions）
+# 這一層擋的是「已經要進到共用分支、但還沒上平台」的問題：每次
+# push/PR 都自動跑一遍，不像本機層依賴開發者記不記得裝 pre-commit，
+# 是全員都逃不掉的關卡。目前檔名叫 incomplete，是故意的——Phase 2
+# 的練習就是把下面註解描述的三個安全步驟自己補成真正可執行的 YAML。
+# ═══════════════════════════════════════════════════════
+name: CI (Incomplete - Phase 1 Audit Target)
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ════════════════════════════════════════════════════
+      # Phase 2 STEP 2（待補）：把手動跑過的安全步驟變成 CI 的一部分
+      #
+      # gitleaks 已經在本機層（pre-commit）處理過，這裡不用重跑。
+      # 這一層要新增的是三個步驟，依序串起來：
+      # ════════════════════════════════════════════════════
+
+      # ─────────────────────────────────────────
+      # 待補 2-1：SCA（Software Composition Analysis）— pip-audit
+      # 做什麼：掃 requirements.txt，比對已知 CVE 資料庫，抓「用了有洞的
+      # 套件版本」這種問題（跟自己寫的程式碼無關，是依賴鏈的風險）。
+      # 為什麼要 continue-on-error: true：這個 lab 的 requirements.txt
+      # 故意留舊版套件，pip-audit 一定會抓到 CVE、一定非 0 結束——如果不加
+      # continue-on-error，job 會在這裡就中斷，後面的 SAST 步驟永遠沒機會跑。
+      # ─────────────────────────────────────────
+
+      # ─────────────────────────────────────────
+      # 待補 2-2：SAST（Static Application Security Testing）— semgrep
+      # 做什麼：不執行程式，直接讀原始碼找危險寫法（例如 SQL 組字串、
+      # 用了不安全的函式），用規則集 p/python + p/owasp-top-ten。
+      # 為什麼輸出 --json --output=semgrep-report.json：這份報告是給
+      # 下一步 security_gate.py 讀的，需要結構化格式而不是純文字。
+      # 先不要加 --config=custom-rules/：那個規則目錄要到 Phase 5
+      # 學員自己寫規則之後才會存在，現在加會找不到路徑而失敗。
+      # ─────────────────────────────────────────
+
+      # ─────────────────────────────────────────
+      # 待補 2-3：Quality Gate — 把 semgrep-report.json 交給
+      # scripts/security_gate.py 判斷要不要擋這個 job
+      # 做什麼：這支腳本已經在 repo 裡了（不用自己寫），它讀 semgrep 的
+      # JSON 報告，依 severity 分成「擋部署」和「只警告」兩類——
+      # 詳細判斷邏輯看 scripts/security_gate.py 開頭的註解。
+      # ─────────────────────────────────────────
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run tests
+        run: pytest tests/ -v

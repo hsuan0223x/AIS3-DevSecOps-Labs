@@ -1,0 +1,40 @@
+# ═══════════════════════════════════════════════════════
+# 起司模型 · 第 1 層：本機層（pre-commit）
+# 對應投影片 STEP 1（裝 pre-commit、驗證 protect 模式 + allowlist）
+#
+# 這一層擋的是「還沒進到雲端、只存在你電腦裡」的問題：commit 前先做一次
+# 快速、破壞力小的自我檢查，把最明顯的錯誤（格式問題、洩漏的密鑰）擋在
+# push 之前，省得留到 CI 層才被抓到。
+#
+# pip-audit、semgrep 故意不放在這裡（放到 CI 層），因為它們跑得比較久、
+# 且這個 lab 的 requirements.txt 故意留舊版套件一定會噴 CVE——不適合每次
+# commit 都卡住開發者，理由詳見 .gitleaks.toml 開頭的說明。
+# ═══════════════════════════════════════════════════════
+repos:
+  # ─────────────────────────────────────────────
+  # 關卡 1-1：一般檔案衛生檢查
+  # 做什麼：修掉常見的格式小問題（結尾空白、缺換行、YAML 語法錯誤、
+  # 誤傳大檔案），跟資安關係不大，但便宜又快，順手一起做。
+  # ─────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+  # ─────────────────────────────────────────────
+  # 關卡 1-2：機密掃描（Secret Scan）— gitleaks
+  # 做什麼：比對這次要 commit 的內容，抓 API 金鑰、密碼、token 這類
+  # 不該進版控的機密字串。
+  # 為什麼這樣設定：這裡沒有額外指定 stage/mode，pre-commit 預設會用
+  # gitleaks 的 protect 模式（只掃這次要 commit 的 diff），不是 detect
+  # 模式（掃整個 git history）——兩者的差異就是投影片
+  # 「SECRET SCAN · TWO MODES」要講的重點：protect 適合本機擋新的洩漏，
+  # detect 適合事後稽核整個 repo 有沒有歷史洩漏。
+  # ─────────────────────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2
+    hooks:
+      - id: gitleaks-system
