@@ -36,13 +36,16 @@ jobs:
           pip-audit -r requirements.txt
 
       # ─────────────────────────────────────────
-      # 待補 2-2：SAST（Static Application Security Testing）— semgrep
-      # 做什麼：不執行程式，直接讀原始碼找危險寫法（例如 SQL 組字串、
-      # 用了不安全的函式），用規則集 p/python + p/owasp-top-ten。
-      # 為什麼輸出 --json --output=semgrep-report.json：這份報告是給
-      # 下一步 security_gate.py 讀的，需要結構化格式而不是純文字。
-      # 先不要加 --config=custom-rules/：那個規則目錄要到 Phase 5
-      # 學員自己寫規則之後才會存在，現在加會找不到路徑而失敗。
+      - name: SAST - Static Analysis (semgrep)
+        run: |
+          pip install semgrep
+          semgrep \
+            --config=p/python \
+            --config=p/owasp-top-ten \
+            --json \
+            --output=semgrep-report.json \
+            . || true
+          python3 scripts/security_gate.py semgrep-report.json
       # ─────────────────────────────────────────
 
       # ─────────────────────────────────────────
