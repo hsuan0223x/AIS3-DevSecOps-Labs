@@ -42,6 +42,7 @@ jobs:
           semgrep \
             --config=p/python \
             --config=p/owasp-top-ten \
+            --config=custom-rules/sql-injection.yaml \
             --json \
             --output=semgrep-report.json \
             . || true

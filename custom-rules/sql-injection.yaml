@@ -1,0 +1,8 @@
+rules:
+  - id: sql-fstring-injection
+    message: SQL query constructed using an f-string may allow SQL injection
+    severity: ERROR
+    languages:
+      - python
+    pattern: |
+      $VAR = f"...{$EXPR}..."
