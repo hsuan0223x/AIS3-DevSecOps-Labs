@@ -29,14 +29,11 @@ jobs:
       # 這一層要新增的是三個步驟，依序串起來：
       # ════════════════════════════════════════════════════
 
-      # ─────────────────────────────────────────
-      # 待補 2-1：SCA（Software Composition Analysis）— pip-audit
-      # 做什麼：掃 requirements.txt，比對已知 CVE 資料庫，抓「用了有洞的
-      # 套件版本」這種問題（跟自己寫的程式碼無關，是依賴鏈的風險）。
-      # 為什麼要 continue-on-error: true：這個 lab 的 requirements.txt
-      # 故意留舊版套件，pip-audit 一定會抓到 CVE、一定非 0 結束——如果不加
-      # continue-on-error，job 會在這裡就中斷，後面的 SAST 步驟永遠沒機會跑。
-      # ─────────────────────────────────────────
+      - name: SCA - Dependency Scan (pip-audit)
+        continue-on-error: true
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt
 
       # ─────────────────────────────────────────
       # 待補 2-2：SAST（Static Application Security Testing）— semgrep
